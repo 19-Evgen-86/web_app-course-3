@@ -1,0 +1,58 @@
+{% extends "main_templates.html"%}
+{%block body%}
+<div>
+
+    <p class="search__results">
+        По запросу "{{search_string}}"
+        найдено постов: {{posts|count}}</p>
+</div>
+<main class="container">
+    <section class="items">
+        {% for post in posts %}
+        <div class="items__item item">
+            <div class="item__top">
+                <!--                все посты пользователя-->
+                <a href="/user/{{post['poster_name']}}" class="item__head">
+                    <div class="item__ava-wrap">
+                        <img src="{{post['poster_avatar']}}" alt="" class="item__ava" width="47">
+                    </div>
+                    <span class="item__username">{{post['poster_name']}}</span>
+                </a>
+            </div>
+            <!--            ссылка на пост-->
+            <a href="/posts/{{post['pk']}}" class="item__post-link">
+                <img src="{{post['pic']}}" alt="" width="348" class="item__post-img">
+            </a>
+            <p class="item__descr">{{post['content']}}</p>
+            <!--            информация о посте-->
+            <div class="item__post-info">
+                <div class="item__counter">
+                    <!--                    количество просмотров-->
+                    <img src="{{url_for('static', filename ='img/eye.png')}}" alt="" class="item__counter-icon"
+                         width="26">
+                    <span class="item__counter-text">{{post['views_count']}}</span>
+                </div>
+            </div>
+            <!--            ссылка на пост-->
+            <div class="item__post-bottom">
+                <a href="/posts/{{post['pk']}}" class="item__btn-more">Подробнее</a>
+                <!--               добавить в закладки-->
+                {% if post["pk"] in bookmarks %}
+                {% set style = "item__bookmark-btn.activ" %}
+                {% set link = "/bookmarks/remove/"+post['pk'] | string() %}
+                {%else%}
+                {% set style = "item__bookmark-btn" %}
+                {% set link = "/bookmarks/add/"+post['pk'] | string() %}
+                {%endif%}
+                <a href={{link}}>
+                    <button type="button" class={{style}}>
+                        <img src="{{url_for('static',filename='img/bookmark.png')}}" alt="" class="item__bookmark-icon"
+                             width="24">
+                    </button>
+                </a>
+            </div>
+        </div>
+        {%endfor%}
+    </section>
+</main>
+{% endblock%}

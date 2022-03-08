@@ -339,7 +339,10 @@ textarea {
 }
 
 .item__descr {
-	margin-bottom: 2px
+	margin-bottom: 2px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .item__text {
@@ -469,7 +472,7 @@ textarea {
 }
 
 .search__results {
-	padding-top: 20px;
+	padding-bottom: 20px;
 	text-align: center;
 	font-size: 18px;
 	color: rgba(0, 0, 0, 0.45)
