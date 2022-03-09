@@ -1,9 +1,12 @@
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass
 from json import JSONDecodeError, load
 from typing import List
+
+logging.basicConfig(filename="log_list.log", level=logging.INFO, encoding='utf-8')
 
 PATH_POSTS_JSON_TEST = os.path.join("..", 'data', "data.json")
 PATH_POSTS_JSON = os.path.join('data', "data.json")
@@ -16,30 +19,40 @@ class MyException(Exception):
     exc: str
 
 
-@dataclass
-class Posts:
-    path_posts_json: str
+class JsonFileManager:
 
-    def open_posts_json(self):
+    def __init__(self, file):
+        self.file = file
+
+    def open_json(self):
         """
         открывает файл JSON
         :return:
         """
-        try:
-            with open(self.path_posts_json, encoding="utf-8") as file:
-                posts: List[dict] = load(file)
-                return posts
-        except JSONDecodeError:
-            raise MyException("Ошибка чтения файла posts.json!")
-        except FileNotFoundError:
-            raise MyException("Нет доступа к файлу posts.json!")
-
-    def save_posts_json(self, posts):
-        with open(self.path_posts_json, 'w', encoding='utf-8') as file:
+        logging.info(f" начало работы {self.open_json.__name__}")
+        if os.path.isfile(self.file):
             try:
-                json.dump(posts, file, ensure_ascii=False)
+                with open(self.file, encoding="utf-8") as file:
+                    posts: List[dict] = load(file)
+                    return posts
             except JSONDecodeError:
-                raise MyException("Ошибка при записи в post.json!")
+                logging.error("Нет доступа к файлу json!")
+                raise MyException("")
+        else:
+            logging.error("Нет доступа к файлу json!")
+            raise MyException("")
+
+    def save_json(self, data):
+        logging.info(f" начало работы {self.save_json.__name__}")
+        with open(self.file, 'w', encoding='utf-8') as file:
+            try:
+                json.dump(data, file, ensure_ascii=False)
+            except JSONDecodeError:
+                logging.error("Ошибка при записи в json!")
+                raise MyException("")
+
+
+class Posts(JsonFileManager):
 
     def replace_hashtags(self, posts_data: List[dict]):
         """
@@ -47,12 +60,14 @@ class Posts:
         :param posts_data:
         :return:
         """
+        logging.info(f" начало работы {self.replace_hashtags.__name__}")
         for post in posts_data:
             hashtags = re.findall(r'(#\w+)', post["content"])
             if hashtags:
                 hashtags_links = [f"<a href = '/tag/{tag.replace('#', '')}'>{tag}</a>" for tag in hashtags]
                 for i in range(len(hashtags_links)):
                     post["content"] = post["content"].replace(hashtags[i], hashtags_links[i], 1)
+        logging.info(f" преобразование хэштегов на ссылки прошло успешно")
         return posts_data
 
     def get_posts_all(self):
@@ -60,7 +75,8 @@ class Posts:
         возвращает посты
         :return:
         """
-        return self.open_posts_json()
+        logging.info(f" начало работы {self.get_posts_all.__name__}")
+        return self.open_json()
 
     def get_posts_by_user(self, user_name: str):
         """
@@ -68,16 +84,19 @@ class Posts:
         :param user_name:
         :return:
         """
-        posts: List[dict] = self.open_posts_json()
+        logging.info(f" начало работы {self.get_posts_by_user.__name__}")
+        posts: List[dict] = self.open_json()
         find_posts: List[dict] = []
         for post in posts:
             if post["poster_name"] == user_name:
                 find_posts.append(post)
 
         if find_posts:
+            logging.info(f" успешно! ")
             return find_posts
         else:
-            raise MyException(f"Постов {user_name} не найдено! ")
+            logging.info(f"Постов {user_name} не найдено! ")
+            return find_posts
 
     def search_for_post(self, query: str):
         """
@@ -85,16 +104,19 @@ class Posts:
         :param query:
         :return:
         """
-        posts: List[dict] = self.open_posts_json()
+        logging.info(f" начало работы {self.search_for_post.__name__}")
+        posts: List[dict] = self.open_json()
         find_posts: List[dict] = []
         for post in posts:
             if query.lower() in post['content'].lower():
                 find_posts.append(post)
 
         if find_posts:
+            logging.info(f" успешно! ")
             return find_posts
         else:
-            raise MyException(f"по запросу {query} постов не найдено :(")
+            logging.info(f"Постов по запросу \"{query}\" не найдено! ")
+            return find_posts
 
     def get_post_by_pk(self, pk):
         """
@@ -102,12 +124,15 @@ class Posts:
         :param pk:
         :return:
         """
-        posts: List[dict] = self.replace_hashtags(self.open_posts_json())
+        logging.info(f" начало работы {self.get_post_by_pk.__name__}")
+        posts: List[dict] = self.replace_hashtags(self.open_json())
         for post in posts:
             if post["pk"] == pk:
+                logging.info(f" успешно! ")
                 return post
         else:
-            raise MyException(f" Пост не найден! ")
+            logging.info(" Пост не найден")
+            return None
 
     def get_posts_by_tag(self, tagname: str):
         """
@@ -115,12 +140,14 @@ class Posts:
         :param tagname:
         :return:
         """
+        logging.info(f" начало работы {self.get_posts_by_tag.__name__}")
         tag = "#" + tagname
-        posts: List[dict] = self.open_posts_json()
+        posts: List[dict] = self.open_json()
         find_posts: List[dict] = []
         for post in posts:
             if tag in post['content']:
                 find_posts.append(post)
+        logging.info(f" успешно! ")
         return find_posts
 
     def get_bookmarks_posts(self, bookmarks: list):
@@ -129,39 +156,26 @@ class Posts:
         :param bookmarks:
         :return:
         """
-        posts: List[dict] = self.open_posts_json()
+        logging.info(f" начало работы {self.get_bookmarks_posts.__name__}")
+        posts: List[dict] = self.open_json()
         find_posts: List[dict] = []
         for post in posts:
             if post["pk"] in bookmarks:
                 find_posts.append(post)
+        logging.info(f" успешно! ")
         return find_posts
 
     def add_view(self, post_id):
-        posts: List[dict] = self.open_posts_json()
+        logging.info(f" начало работы {self.add_view.__name__}")
+        posts: List[dict] = self.open_json()
         for post in posts:
             if post["pk"] == post_id:
                 post["views_count"] += 1
 
-        self.save_posts_json(posts)
+        self.save_json(posts)
+        logging.info(f" успешно! ")
 
-
-@dataclass
-class Comments:
-    path_comments_json: str
-
-    def open_comments_json(self):
-        """
-        открывает файл JSON
-        :return:
-        """
-        try:
-            with open(self.path_comments_json, encoding="utf-8") as file:
-                comments: List[dict] = load(file)
-                return comments
-        except JSONDecodeError:
-            raise MyException("Ошибка чтения файла comments.json!")
-        except FileNotFoundError:
-            raise MyException("Нет доступа к файлу comments.json!")
+class Comments(JsonFileManager):
 
     def get_comments_by_post_id(self, post_id: int):
         """
@@ -169,57 +183,52 @@ class Comments:
         :param post_id:
         :return:
         """
-        comments = self.open_comments_json()
+        logging.info(f" начало работы {self.get_comments_by_post_id.__name__}")
+        comments = self.open_json()
         find_comments: List[dict] = []
         for comment in comments:
             if comment["post_id"] == post_id:
                 find_comments.append(comment)
+        logging.info(f" успешно! ")
         return find_comments
 
-    def save_comments_json(self, comments):
-        with open(self.path_comments_json, 'w', encoding='utf-8') as file:
-            try:
-                json.dump(comments, file,ensure_ascii=False)
-            except JSONDecodeError:
-                raise MyException("Ошибка при записи в comments.json")
 
-
-@dataclass
-class Bookmarks:
-    path_bookmarks_json: str
-
-    def open_bookmarks_json(self):
-        with open(self.path_bookmarks_json, encoding='utf-8') as file:
-            try:
-                bookmarks: List[dict] = load(file)
-                return bookmarks
-            except JSONDecodeError:
-                raise MyException("Ошибка при открытии в Bookmarks.json")
-
-    def save_bookmarks_json(self, bookmarks):
-        with open(self.path_bookmarks_json, 'w', encoding='utf-8') as file:
-            try:
-                json.dump(bookmarks, file,ensure_ascii=False)
-            except JSONDecodeError:
-                raise MyException("Ошибка при записи в Bookmarks.json")
+class Bookmarks(JsonFileManager):
 
     def add_bookmarks(self, post_id):
-
-        bookmarks: List[dict] = self.open_bookmarks_json()
+        """
+        добавляет пост в закладки
+        :param post_id:
+        :return:
+        """
+        logging.info(f" начало работы {self.add_bookmarks.__name__}")
+        bookmarks: List[dict] = self.open_json()
         bookmarks.append({'pk': post_id})
-        self.save_bookmarks_json(bookmarks)
-
+        self.save_json(bookmarks)
+        logging.info(f" успешно! ")
     def get_bookmarks_activ(self):
-        bookmarks = self.open_bookmarks_json()
+        """
+        возвращает ID постов в закладках
+        :return:
+        """
+        logging.info(f" начало работы {self.get_bookmarks_activ.__name__}")
+        bookmarks = self.open_json()
+        logging.info(f" успешно! ")
         return [bookmark["pk"] for bookmark in bookmarks]
 
     def remove_bookmarks(self, post_id):
-        bookmarks: List[dict] = self.open_bookmarks_json()
+        """
+        удаляет пост из закладок
+        :param post_id:
+        :return:
+        """
+        logging.info(f" начало работы {self.remove_bookmarks.__name__}")
+        bookmarks: List[dict] = self.open_json()
         for bookmark in bookmarks:
             if bookmark['pk'] == post_id:
                 bookmarks.pop(bookmarks.index(bookmark))
-        self.save_bookmarks_json(bookmarks)
-
+        self.save_json(bookmarks)
+        logging.info(f" успешно! ")
 
 posts = Posts(PATH_POSTS_JSON)
 comments = Comments(PATH_COMMENTS_JSON)

@@ -83,7 +83,6 @@ class TestApi:
         assert resp_json['likes_count']
         assert resp_json['pk']
 
-
-# выполняется после теста
-def teardown(self):
-    app.testing = False
+    # выполняется после теста
+    def teardown(self):
+        app.testing = False
