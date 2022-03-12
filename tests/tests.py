@@ -11,12 +11,12 @@ class TestPosts:
 
     def test_open_json(self, from_open_json):
         posts = Posts(PATH_POSTS_JSON_TEST)
-        assert posts.open_posts_json()[0] == from_open_json
+        assert posts.open_json()[0] == from_open_json
 
     def test_open_json_error(self):
         with pytest.raises(MyException):
             posts = Posts("data.json")
-            json = posts.open_posts_json()
+            json = posts.open_json()
 
     @patch("utils.Posts")
     def test_get_post_by_user(self, moskPosts, from_search_data):

@@ -3,8 +3,11 @@ import logging
 import os
 import re
 from dataclasses import dataclass
+from functools import wraps
 from json import JSONDecodeError, load
 from typing import List
+
+from flask import render_template
 
 logging.basicConfig(filename="log_list.log", level=logging.INFO, encoding='utf-8')
 
@@ -175,6 +178,7 @@ class Posts(JsonFileManager):
         self.save_json(posts)
         logging.info(f" успешно! ")
 
+
 class Comments(JsonFileManager):
 
     def get_comments_by_post_id(self, post_id: int):
@@ -206,6 +210,7 @@ class Bookmarks(JsonFileManager):
         bookmarks.append({'pk': post_id})
         self.save_json(bookmarks)
         logging.info(f" успешно! ")
+
     def get_bookmarks_activ(self):
         """
         возвращает ID постов в закладках
@@ -229,6 +234,18 @@ class Bookmarks(JsonFileManager):
                 bookmarks.pop(bookmarks.index(bookmark))
         self.save_json(bookmarks)
         logging.info(f" успешно! ")
+
+
+def catch_error(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except MyException:
+            return render_template("error.html")
+
+    return inner
+
 
 posts = Posts(PATH_POSTS_JSON)
 comments = Comments(PATH_COMMENTS_JSON)
