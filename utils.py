@@ -21,7 +21,6 @@ PATH_BOOKMARKS_JSON = os.path.join('data', "bookmarks.json")
 class MyException(Exception):
     exc: str
 
-
 class JsonFileManager:
 
     def __init__(self, file):
